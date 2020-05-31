@@ -84,29 +84,94 @@ class Node:
         global root
         global num_spaces
         if self.data == root.data :
-            #print('  "' + self.data['tag_name'] + '": {')
             text.insert(INSERT,'  "' + self.data['tag_name'] + '": {\n')
-            if self.data['attr']:
-               r=self.data['attr'].split("=")
-               text.insert(INSERT,num_space()+'      "__'+r[0]+'" : '+r[1] +'\n')
+            num_spaces += 1
         elif self.children or self.data['attr']:
-           if num_spaces<4:num_spaces +=1
-           text.insert(INSERT,num_space()+'      "'+self.data['tag_name']+'": {\n')
+           arr=False
+           if prettify[self.data['line_number']] == -1 :
+                num_spaces -= 1
+           if not self.children:
+               dum =num_spaces
+               num_spaces=3
+           if self.children:  # self.synset_no()==1:
+               for h in range(len(self.children) - 1):
+                   #if h != 0:
+                   #    if self.children[h].data['tag_name'] != '0' + self.children[h - 1].data['tag_name']:
+                           if self.children[h].data['tag_name'] == self.children[h + 1].data['tag_name']:
+                               u = self.children[h].data['tag_name']
+                               self.children[h].data['tag_name'] = '1' + self.children[h].data['tag_name']
+                               for j, g in enumerate(range(len(self.children) - (h + 1)), start=h):
+                                   y = self.children[j + 1].data['tag_name']
+                                   if y == u:
+                                       self.children[j + 1].data['tag_name'] = '0' + self.children[h].data[
+                                           'tag_name']
+                                   else:
+                                       break
+           if self.children or self.synset_no()==1:
+               k='['
+               arr=True
+           else:
+               k='{'
+               arr=False
+           if not self.children:
+               if self.data['tag_name'][0] == '1' and self.data['tag_name'][1] != '0' and self.data['tag_name'][1] != '1' :
+                   text.insert(INSERT,num_space()+'      "'+self.data['tag_name'][1:]+'":  [ \n')
+                   text.insert(INSERT,num_space()+'             {\n')
+               elif self.data['tag_name'][0] =='0' or self.data['tag_name'][0] == '1':text.insert(INSERT,num_space()+'            {'+'\n')
+               else :text.insert(INSERT,num_space()+'      "'+self.data['tag_name']+'":  {\n')
+           else :
+               if self.data['tag_name'][0] == '1' and self.data['tag_name'][1] != '0' and self.data['tag_name'][1] != '1' :
+                   text.insert(INSERT,num_space()+'      "'+self.data['tag_name'][1:]+'":  \n')
+                 #  text.insert(INSERT, num_space() + '             {\n')
+               elif self.data['tag_name'][0] == '0':
+                   text.insert(INSERT, num_space() + '            {' + '\n')
+               elif self.data['tag_name'][0] != '0' and self.data['tag_name'][0] != '1' : text.insert(INSERT, num_space() + '      "' + self.data['tag_name'] + '": [   \n')
+           if arr :  text.insert(INSERT,num_space()+'           {\n')
+           if prettify[self.data['line_number']] == 1 and num_spaces<=4:
+                num_spaces += 1
+           sec =False
+           thi =False
            if self.data['attr'] and self.data['attr'].find('=') !=-1:
-               r=self.data['attr'].split("=")
-               text.insert(INSERT,num_space()+'      "__'+r[0]+'" : '+r[1] +'\n')
-               if self.data['body']:
-                   bod = "".join(self.data['body'])
-                   text.insert(INSERT, num_space() + '      "__text" : ' +'"' +bod + '"\n')
-
-           #num_spaces +=1
-
+               r=self.data['attr'].split("=",1)
+               if r[1].find('" ') != -1:
+                   sec=True
+                   second=r[1].find('" ')+1
+                   s=r[1][second+1:]
+                   r[1] = r[1][: second]
+                   s = s.split("=", 1)
+                   if s[1].find('" ') != -1:
+                       thi = True
+                       third = s[1].find('" ') + 1
+                       t = s[1][third + 1:]
+                       s[1] = s[1][: third]
+                       t = t.split("=", 1)
+               if not self.children:
+                   dum=num_spaces
+                   num_spaces=4
+                   k=',' if self.data['body'] else ''
+                   text.insert(INSERT,num_space()+'      "__'+r[0]+'" : '+r[1]+'' +k+'\n')
+                   if sec :
+                       text.insert(INSERT, num_space() + '      "__' + s[0] + '" : ' + s[1] + '' + k + '\n')
+                       if thi :
+                           text.insert(INSERT, num_space() + '      "__' + t[0] + '" : ' + t[1] + '' + k + '\n')
+                   if self.data['body']:
+                       bod = "".join(self.data['body'])
+                       text.insert(INSERT, num_space() + '      "__text" : ' +'"' +bod + '"\n')
         else:
             dum=num_spaces
             num_spaces =4
             bod="".join(self.data['body'])
-            #print(num_space()+'     "'+self.data['tag_name']+'": "'+bod+'",')
-            text.insert(INSERT,num_space() + '     "' + self.data['tag_name'] + '": "' + bod + '",\n')
+            if self.data['tag_name'][0] == '1' and self.data['tag_name'][1] != '0' :
+                text.insert(INSERT, num_space() + '     "' + self.data['tag_name'][1:] + '":  [\n')
+                text.insert(INSERT, num_space() + '                   "' + bod + '",\n')
+            elif self.data['tag_name'][0] == '1'and self.data['tag_name'][1] == '0':
+                #text.insert(INSERT, num_space() + '     "' + self.data['tag_name'][1:] + '":  [\n')
+                text.insert(INSERT, num_space() + '                   "' + bod + '",\n')
+            elif self.data['tag_name'][0] == '0':
+                text.insert(INSERT, num_space() + '                   "' + bod + '",\n')
+            else:
+                text.insert(INSERT, num_space() + '   "' + self.data['tag_name'] + '": "' + bod + '",\n')
+            #text.insert(INSERT,num_space() + '     "' + self.data['tag_name'] + '": "' + bod + '",\n')
             num_spaces=dum
             num_spaces-=1
 
@@ -114,12 +179,27 @@ class Node:
           for l in range(len(self.children)):
              self.children[l].PrintTree()
           if self.data==root.data :
-              text.insert(INSERT,num_space() + '  }\n')
-              #print(num_space()+'  }')
+              if self.data['attr']:
+                  r = self.data['attr'].split("=")
+                  if r[1].find(' ') !=-1 : r[1]=r[1][ : r[1].find(' ')]
+                  text.insert(INSERT,  '      "__' + r[0] + '" : ' + r[1] + '\n')
+              text.insert(INSERT, '  }\n')
           else:
-              text.insert(INSERT,num_space() + '     },\n')
-              #print(num_space()+'     },')
+              if self.data['attr'] and self.data['attr'].find('=') != -1:
+                  if self.children:
+                      text.insert(INSERT, num_space() + '      "__' + r[0] + '" : ' + r[1] + ',\n')
+                      if sec:
+                          text.insert(INSERT, num_space() + '      "__' + s[0] + '" : ' + s[1] + ',\n')
+                          if thi:
+                              text.insert(INSERT, num_space() + '      "__' + t[0] + '" : ' + t[1] + ',\n')
+                  if self.data['body']:
+                      bod = "".join(self.data['body'])
+                      if self.children:text.insert(INSERT, num_space() + '      "__text" : ' + '"' + bod + '"\n')
+              if arr:
+                  text.insert(INSERT,num_space() + '       }\n')
+                  text.insert(INSERT,num_space() + '    ],\n')
 
+        elif self.data['attr']:    text.insert(INSERT,num_space() + '     },\n')
 
 
 #------------------------------------Show Errors-----------------------------------------------------------------------#
@@ -144,6 +224,7 @@ def num_space():
 #-------------------------------------------Print JSON In File --------------------------------------------------------#
 
 def JSON():
+    rootInit()
     valid = validate(source)
     if valid:
         global root
@@ -176,7 +257,8 @@ def get_line_numbers():
     return output
 
 
-#------------------------------------------Get Synset Count and Word Definition----------------------------------------#
+#---------------------------------
+# ---------Get Synset Count and Word Definition----------------------------------------#
 
 def syn_count():
     errorText.delete(1.0,END)
@@ -188,7 +270,8 @@ def syn_count():
 
 def Define():
     try:
-     root.definition(str(entry.get()))
+        rootInit()
+        root.definition(str(entry.get()))
     except:
         print(0)
 
@@ -265,7 +348,7 @@ def save():
 def source_print():
     global so
     global errors
-    print(so)
+    
     text.delete(1.0, END)
     for s in so:
         text.insert(INSERT,s )
@@ -287,6 +370,7 @@ def Minify():
 #---------------------------------------------Prettify XML FIle--------------------------------------------------------#
 
 def pretty():
+    rootInit()
     valid = validate(source)
     if valid:
         global prettify
@@ -343,8 +427,43 @@ def validate_x():
         return
     else:
         errormessage('XML is not valid')
-#-------------------------------------------------Start Function-------------------------------------------------------#
-def start():
+#-------------------------------------solve errors----------------------------------------------------------------------
+def solve_error():
+    rootInit()
+    result = showError(source)
+    errors = result[1]
+    text.delete(1.0, END)
+    for z in range(len(errors)):
+        line_num = errors[z]['line_number']
+        if errors[z]['val'] == 'tags must end with >':
+            so[line_num] = so[line_num].replace(lines[line_num], lines[line_num] + '>')
+            # fix.append(lines[types[z]['line_number']] + '>')
+            continue
+        if errors[z]['val'] == '< is missing':
+            if errors[z].get('solu') == 'replace/':
+                so[line_num] = so[line_num].replace('/', '</')
+                # fix.append(lines[types[z]['line_number']].replace('/', '</'))
+                continue
+            if errors[z].get('solu') == '< at begining':
+                so[line_num] = so[line_num].replace(lines[line_num], '<' + lines[line_num])
+                # fix.append('<' + lines[types[z]['line_number']])
+                continue
+
+            if errors[z].get('solu') == 'delete body before <':
+                x = lines[line_num]
+                so[line_num] = x[x.find('<'):]+'\n'
+        if errors[z]['val'] == 'found extra / or <':
+            l_num = lines[line_num]
+            new = l_num[l_num.find('/') + 1: -1]
+            so[line_num] = so[line_num].replace(new, new + '>', 1)
+
+
+
+    for l in so:
+        text.insert(INSERT, l )
+
+#----------------------------------------------Root and Prettify Initialise--------------------------------------------#
+def rootInit():
     global source
     global so
     global errors
@@ -398,6 +517,11 @@ def start():
             if stack:
                 continue
 
+#-------------------------------------------------Start Function-------------------------------------------------------#
+def start():
+    pass
+
+
 #--------------------------------------------------###############-----------------------------------------------------#
 
 
@@ -427,7 +551,7 @@ menu_bar.add_command(label='Number of synsets', command=syn_count)
 menu_bar.add_command(label='Prettify', command=pretty)
 menu_bar.add_command(label='Show Original File',  command=source_print)
 root.config(menu=menu_bar)
-
+menu_bar.add_command(label='Solve Errors',  command=solve_error)
 line_number_bar = Text(inputframe, width=4, padx=3, takefocus=0,  border=0,
                        background='grey40', state='disabled',  wrap='none', fg='grey80')
 line_number_bar.pack(side='left',  fill='y')
