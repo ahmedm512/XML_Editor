@@ -86,7 +86,10 @@ class Node:
         if self.data == root.data :
             text.insert(INSERT,'  "' + self.data['tag_name'] + '": {\n')
             num_spaces += 1
+
         elif self.children or self.data['attr']:
+           if self.synset_no() == 1:
+                self.children[len(self.children) - 1].data['body'][0] += '`'
            arr=False
            if prettify[self.data['line_number']] == -1 :
                 num_spaces -= 1
@@ -102,9 +105,12 @@ class Node:
                                self.children[h].data['tag_name'] = '1' + self.children[h].data['tag_name']
                                for j, g in enumerate(range(len(self.children) - (h + 1)), start=h):
                                    y = self.children[j + 1].data['tag_name']
+
                                    if y == u:
                                        self.children[j + 1].data['tag_name'] = '0' + self.children[h].data[
                                            'tag_name']
+
+
                                    else:
                                        break
            if self.children or self.synset_no()==1:
@@ -159,16 +165,26 @@ class Node:
                        text.insert(INSERT, num_space() + '      "__text" : ' +'"' +bod + '"\n')
         else:
             dum=num_spaces
+            fl=False
             num_spaces =4
             bod="".join(self.data['body'])
             if self.data['tag_name'][0] == '1' and self.data['tag_name'][1] != '0' :
                 text.insert(INSERT, num_space() + '     "' + self.data['tag_name'][1:] + '":  [\n')
                 text.insert(INSERT, num_space() + '                   "' + bod + '",\n')
             elif self.data['tag_name'][0] == '1'and self.data['tag_name'][1] == '0':
-                #text.insert(INSERT, num_space() + '     "' + self.data['tag_name'][1:] + '":  [\n')
+                if bod.find('`') != -1:
+                    bod=bod[:-1]
+                    fl=True
                 text.insert(INSERT, num_space() + '                   "' + bod + '",\n')
-            elif self.data['tag_name'][0] == '0':
+                if fl:
+                    text.insert(INSERT, num_space() + '                   ],\n')
+            elif self.data['tag_name'][0] == '0' :
+                if bod.find('`') != -1:
+                        bod = bod[:-1]
+                        fl = True
                 text.insert(INSERT, num_space() + '                   "' + bod + '",\n')
+                if fl:
+                    text.insert(INSERT, num_space() + '                   ],\n')
             else:
                 text.insert(INSERT, num_space() + '   "' + self.data['tag_name'] + '": "' + bod + '",\n')
             #text.insert(INSERT,num_space() + '     "' + self.data['tag_name'] + '": "' + bod + '",\n')
